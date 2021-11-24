@@ -84,6 +84,17 @@ void sig_int_handler(int)
      	else if(gain_list[i] == 14){gain_list_hex[i] = "eeee"; }
      	else if(gain_list[i] == 15){gain_list_hex[i] = "ffff"; }
      }
+     
+     // Convert the angles to hexadecimal equivalent for the AiP
+     
+     
+     std::string angle_list_hex[4] = {"","","",""};
+     for (int i=0; i<4; i++){
+     	if (angle_list[i] == 0){angle_list_hex[i] = "0000"; }
+     	else if(angle_list[i] == 1){angle_list_hex[i] = "1111"; }
+     	else if(angle_list[i] == 2){angle_list_hex[i] = "2222"; }
+     }
+     
 
      // Create final register list
      std::string register_list[4] = {"", "", "", ""};
@@ -93,6 +104,7 @@ void sig_int_handler(int)
      	register_list[i].append(active_list_hex[i]);
      	register_list[i].append(std::to_string(gain));
      	register_list[i].append(gain_list_hex[i]);
+     	register_list[i].append(angle_list_hex[i]);
      }     
      
      
