@@ -42,6 +42,7 @@ void sig_int_handler(int)
  * Auxiliary functions for serial communications with mmWave array
  **********************************************************************/
  
+ // Create string of instructions for array operations
  std::string* create_register_list(std::string degrees, std::string direction, int* gain_list, int gain, std::string* active_list, int mode)
  {
      // Convert the active_list to hexadecimal equivalent for the AiP
@@ -84,20 +85,11 @@ void sig_int_handler(int)
      	else if(gain_list[i] == 14){gain_list_hex[i] = "eeee"; }
      	else if(gain_list[i] == 15){gain_list_hex[i] = "ffff"; }
      }
-     
      // Convert the angles to hexadecimal equivalent for the AiP
-     
-     
-     std::string angle_list_hex[4] = {"","","",""};
-     for (int i=0; i<4; i++){
-     	if (angle_list[i] == 0){angle_list_hex[i] = "0000"; }
-     	else if(angle_list[i] == 1){angle_list_hex[i] = "1111"; }
-     	else if(angle_list[i] == 2){angle_list_hex[i] = "2222"; }
-     }
-     
-
+     std::string* angle_list_hex ;
+     angle_list_hex = angle_to_reg(degrees, direction);
      // Create final register list
-     std::string register_list[4] = {"", "", "", ""};
+     std::string* register_list = new std::string[4];
      for (int i=0; i<4; i++){
      	register_list[i].append("000");
      	register_list[i].append(std::to_string(mode));
@@ -106,20 +98,6 @@ void sig_int_handler(int)
      	register_list[i].append(gain_list_hex[i]);
      	register_list[i].append(angle_list_hex[i]);
      }     
-     
-     
-     
-     // reg = RegControl.RegControl(c.DEG_101_2, c.UP, [3, 14, 0, 1], 1, ['0010', '1111', '0101', '1111'], 1)    
-     //{"0001d13333480832", "000101eeee480832", "0001a10000116da4", "0001011111116da4"};
-     /*
-     r = ''
-    r += '000'
-    r += str(self.mode)
-    r += str(self.act[i])
-    r += str(hex(self.gain)[2:])
-    r += str(hex(self.gain_l[i])[2:]) * 4
-    r += str(self.angle_reg[i])*/
-     
      std::cout << boost::format(" REGISTER LIST: {%s, %s, %s, %s}") % register_list[0] % register_list[1] % register_list[2] % register_list[3] << std::endl;
      return register_list; 
  }
@@ -225,10 +203,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
      **********************************************************************/
    
     int gain_list[4] = {3, 14, 0, 1};
-    int* gain_list_ptr = gain_list;
     std::string active_list[4] = {"0010", "1111", "0101", "1111"};
-    std::string* active_list_ptr = active_list; 
-    std::string* created_register_list = create_register_list("DEG_101_2", "UP", gain_list, 1, active_list, 1);
+    std::string* register_list = create_register_list("DEG_101_2", "UP", gain_list, 1, active_list, 1);
      
      
      
@@ -250,7 +226,6 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     write_read_serial(&my_serial_port, "AT+SEND?\r\0");
     
     // Write insctructions for each chip
-    std::string register_list[4] = {"0001d13333480832", "000101eeee480832", "0001a10000116da4", "0001011111116da4"};
     for (int i=0; i<4; i++){
         my_string = "AT+REG=";
         my_string.append(register_list[i]);
