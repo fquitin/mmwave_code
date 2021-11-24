@@ -104,7 +104,7 @@ void sig_int_handler(int)
  
  
  
- 
+// Write string on serial port and read response
 std::string write_read_serial(SerialPort* my_serial_port, std::string my_string)
 {
     int timeout_ms = 5; // timeout value in milliseconds
@@ -136,6 +136,70 @@ std::string write_read_serial(SerialPort* my_serial_port, std::string my_string)
 }
  
  
+// Send command to mmWave AiP
+void send_to_aip(SerialPort* my_serial_port, std::string degrees, std::string direction, int* gain_list, int gain, std::string* active_list, int mode)
+{
+    std::string my_string; 
+    std::string* register_list = create_register_list(degrees, direction, gain_list, gain, active_list, mode);
+      
+    // Initialize the mmWave array package
+    std::cout << boost::format("Initialize mmWave array...") << std::endl;
+    write_read_serial(my_serial_port, "AT+DUT=0158\r\0");
+    write_read_serial(my_serial_port, "AT+AIPCONFIG=0202\r\0");
+    write_read_serial(my_serial_port, "AT+ADRNUM=001\r\0");
+    // TODO: check if all responses = AMO_OK
+    
+    // Initialize chip registers
+    my_string = "AT+REG=";
+    my_string.append(REG1);
+    my_string.append("\r\0");
+    for (int i=0; i<4; i++){
+    	write_read_serial(my_serial_port, my_string);
+    }
+    // TODO: check if all responses = CHIP_OK
+    write_read_serial(my_serial_port, "AT+SEND?\r\0");
+    
+    // Write insctructions for each chip
+    for (int i=0; i<4; i++){
+        my_string = "AT+REG=";
+        my_string.append(register_list[i]);
+        my_string.append("\r\0");
+        write_read_serial(my_serial_port, my_string);
+    }
+    // TODO: check if all responses = CHIP_OK
+    write_read_serial(my_serial_port, "AT+SEND?\r\0");
+    
+    // Read temperature of each chip
+    my_string = "AT+REG=";
+    my_string.append(REG_TEMP);
+    my_string.append("\r\0");
+    for (int i=0; i<4; i++){
+        write_read_serial(my_serial_port, my_string);
+    }
+    // TODO: check if all responses = CHIP_OK
+    write_read_serial(my_serial_port, "AT+SEND?\r\0");
+    
+    // Enable Tx or Rx
+    if (mode == 1){
+	std::cout << boost::format("Enabling Tx..") << std::endl;
+	write_read_serial(my_serial_port, "AT+TXEN=1\r\0");
+    }
+    else if (mode == 0){
+        std::cout << boost::format("Enabling Rx..") << std::endl;
+	write_read_serial(my_serial_port, "AT+RXEN=1\r\0");
+    }   
+    // TODO: check if all responses = AMO_OK
+      
+}
+ 
+// Disable Tx/Rx of mmWave AiP
+void disable_aip(SerialPort* my_serial_port)
+{
+    std::cout << boost::format("Disabling Tx and Rx of AiP..") << std::endl;
+    write_read_serial(my_serial_port, "AT+TXEN=0\r\0");
+    write_read_serial(my_serial_port, "AT+RXEN=0\r\0");
+    // TODO: check if all responses = AMO_OK
+}
  
 
 
@@ -183,6 +247,11 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
         return ~0;
     }
     
+    
+    /***********************************************************************
+     * Open serial port of the mmWave array
+     **********************************************************************/
+
     // Create and open the serial port for communication with the mmWave array.
     std::cout << boost::format("Create and open the serial port for mmWave array on %s...") % name_serial_port << std::endl;
     SerialPort my_serial_port( name_serial_port );
@@ -194,55 +263,20 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     my_serial_port.SetCharacterSize( LibSerial::CharacterSize::CHAR_SIZE_8 );
     my_serial_port.SetStopBits( LibSerial::StopBits::STOP_BITS_1 ) ;
     my_serial_port.SetParity( LibSerial::Parity::PARITY_NONE );
-    
-    
-    
+
     
     /***********************************************************************
      * The following code is to be done for each operation of the mmWave array
      **********************************************************************/
+     
+    std::string possible_degrees[17] = {"DEG_0","DEG_11_25","DEG_22_25","DEG_33_75","DEG_45","DEG_56_25","DEG_67_5","DEG_78_75","DEG_90","DEG_101_2","DEG_112_5","DEG_123_7","DEG_135","DEG_146_2","DEG_157_5","DEG_168_7","DEG_180"};				
+    std::string possible_directions[4] = {"UP", "DOWN", "LEFT", "RIGHT"};
    
-    int gain_list[4] = {3, 14, 0, 1};
-    std::string active_list[4] = {"0010", "1111", "0101", "1111"};
-    std::string* register_list = create_register_list("DEG_101_2", "UP", gain_list, 1, active_list, 1);
-     
-     
-     
-    // Initialize the mmWave array package
-    std::cout << boost::format("Initialize mmWave array...") << std::endl;
-    write_read_serial(&my_serial_port, "AT+DUT=0158\r\0");
-    write_read_serial(&my_serial_port, "AT+AIPCONFIG=0202\r\0");
-    write_read_serial(&my_serial_port, "AT+ADRNUM=001\r\0");
-    // TODO: check if all responses = AMO_OK
-    
-    // Initialize chip registers
-    my_string = "AT+REG=";
-    my_string.append(REG1);
-    my_string.append("\r\0");
-    for (int i=0; i<4; i++){
-    	write_read_serial(&my_serial_port, my_string);
-    }
-    // TODO: check if all responses = CHIP_OK
-    write_read_serial(&my_serial_port, "AT+SEND?\r\0");
-    
-    // Write insctructions for each chip
-    for (int i=0; i<4; i++){
-        my_string = "AT+REG=";
-        my_string.append(register_list[i]);
-        write_read_serial(&my_serial_port, my_string);
-    }
-    // TODO: check if all responses = CHIP_OK
-    write_read_serial(&my_serial_port, "AT+SEND?\r\0");
-    
-    // Read temperature of each chip
-    my_string = "AT+REG=";
-    my_string.append(REG_TEMP);
-    my_string.append("\r\0");
-    for (int i=0; i<4; i++){
-        write_read_serial(&my_serial_port, my_string);
-    }
-    // TODO: check if all responses = CHIP_OK
-    write_read_serial(&my_serial_port, "AT+SEND?\r\0");
+    int gain = 1; 
+    int gain_list[4] = {0,0,0,0};
+    std::string active_list[4] = {"1111", "1111", "1111", "1111"};
+    int mode = 1;
+    send_to_aip(&my_serial_port, possible_degrees[0], possible_directions[2], gain_list, gain, active_list, mode);
     
     /***********************************************************************
      *  
@@ -250,7 +284,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     
     
 
-    /*
+    
     // create a usrp device
     std::cout << std::endl;
     std::cout << boost::format("Creating the usrp device with: %s...") % args << std::endl;
@@ -312,7 +346,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     usrp->set_tx_antenna(ant2, 1);
     
     std::this_thread::sleep_for(std::chrono::seconds(1)); // allow for some setup time
-    */
+    
 
 
 
@@ -439,6 +473,10 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     tx_stream->send("", 0, md);
 	
     */
+    
+    
+    // Disable AiP
+    disable_aip(&my_serial_port);
     
     // Close serial port
     std::cout << std::endl << "Close serial port ..." << std::endl << std::endl;
