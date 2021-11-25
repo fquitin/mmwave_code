@@ -14,6 +14,56 @@ extern const std::string CHIP_OK = "AMO:4 chip setting complite ok";
 extern const std::string AMO_OK = "AMO:ok";
 
 
+// Convert the active_list to hexadecimal equivalent for the AiP
+std::string* active_list_to_hex(std::string* active_list)
+{
+    std::string* active_list_hex = new std::string[4];
+    for (int i=0; i<4; i++){
+     	if (active_list[i] == "0000"){active_list_hex[i] = "f"; }
+     	else if(active_list[i] == "0001"){active_list_hex[i] = "e"; }
+     	else if(active_list[i] == "0010"){active_list_hex[i] = "d"; }
+     	else if(active_list[i] == "0011"){active_list_hex[i] = "c"; }
+     	else if(active_list[i] == "0100"){active_list_hex[i] = "b"; }
+     	else if(active_list[i] == "0101"){active_list_hex[i] = "a"; }
+     	else if(active_list[i] == "0110"){active_list_hex[i] = "9"; }
+     	else if(active_list[i] == "0111"){active_list_hex[i] = "8"; }
+     	else if(active_list[i] == "1000"){active_list_hex[i] = "7"; }
+     	else if(active_list[i] == "1001"){active_list_hex[i] = "6"; }
+     	else if(active_list[i] == "1010"){active_list_hex[i] = "5"; }
+     	else if(active_list[i] == "1011"){active_list_hex[i] = "4"; }
+     	else if(active_list[i] == "1100"){active_list_hex[i] = "3"; }
+     	else if(active_list[i] == "1101"){active_list_hex[i] = "2"; }
+     	else if(active_list[i] == "1110"){active_list_hex[i] = "1"; }
+     	else if(active_list[i] == "1111"){active_list_hex[i] = "0"; }
+    }
+    return active_list_hex; 
+}
+
+// Convert gain list to hex register values for AiP
+std::string* gain_list_to_hex(int* gain_list)
+{
+    std::string* gain_list_hex = new std::string[4];
+    for (int i=0; i<4; i++){
+     	if (gain_list[i] == 0){gain_list_hex[i] = "0000"; }
+     	else if(gain_list[i] == 1){gain_list_hex[i] = "1111"; }
+     	else if(gain_list[i] == 2){gain_list_hex[i] = "2222"; }
+     	else if(gain_list[i] == 3){gain_list_hex[i] = "3333"; }
+     	else if(gain_list[i] == 4){gain_list_hex[i] = "4444"; }
+     	else if(gain_list[i] == 5){gain_list_hex[i] = "5555"; }
+     	else if(gain_list[i] == 6){gain_list_hex[i] = "6666"; }
+     	else if(gain_list[i] == 7){gain_list_hex[i] = "7777"; }
+     	else if(gain_list[i] == 8){gain_list_hex[i] = "8888"; }
+     	else if(gain_list[i] == 9){gain_list_hex[i] = "9999"; }
+     	else if(gain_list[i] == 10){gain_list_hex[i] = "aaaa"; }
+     	else if(gain_list[i] == 11){gain_list_hex[i] = "bbbb"; }
+     	else if(gain_list[i] == 12){gain_list_hex[i] = "cccc"; }
+     	else if(gain_list[i] == 13){gain_list_hex[i] = "dddd"; }
+     	else if(gain_list[i] == 14){gain_list_hex[i] = "eeee"; }
+     	else if(gain_list[i] == 15){gain_list_hex[i] = "ffff"; }
+    }
+    return gain_list_hex; 
+}
+
 // Convert angles to register values for AiP
 std::string* angle_to_reg(std::string degrees, std::string direction)
 {
