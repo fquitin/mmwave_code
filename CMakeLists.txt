@@ -10,6 +10,7 @@
 ########################################################################
 set(mmwave_code_sources
     mmwave_tx.cpp
+    mmwave_rx.cpp
 )
 
 

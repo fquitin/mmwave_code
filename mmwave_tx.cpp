@@ -99,7 +99,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     double rate, freq_bb, gain_bb, freq_lo, gain_lo;
     
     
-    uint64_t 	nbr_samps_per_direction = 20000000;
+    uint64_t 	nbr_samps_per_direction = 5000000;
     int 		nbr_directions = 1;
     
     // The following vector contains the phase shift between antennas (in degrees)
@@ -175,7 +175,6 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     if (vm.count("ref")) {
     	usrp_tx->set_clock_source(ref);
     }
-    std::cout << boost::format("Using USRP-TX Device: %s") % usrp_tx->get_pp_string() << std::endl;
 
     
     // set the sample rate
