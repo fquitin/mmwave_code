@@ -323,10 +323,10 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     	//setup streaming
 		total_num_samps = nbr_samps_per_direction ;
 		std::cout << boost::format("Begin streaming %u samples, %f seconds in the future...") % total_num_samps % seconds_in_future << std::endl;
-		uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_NUM_SAMPS_AND_MORE);
-		stream_cmd.num_samps = total_num_samps;
-		stream_cmd.stream_now = true;
-		//stream_cmd.time_spec = uhd::time_spec_t(seconds_in_future);
+		uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
+		//stream_cmd.num_samps = total_num_samps;
+		stream_cmd.stream_now = false;
+		stream_cmd.time_spec = uhd::time_spec_t(seconds_in_future);
 		rx_stream->issue_stream_cmd(stream_cmd);
     	
     	// Receive "nbr_samps_per_direction" samples
@@ -351,6 +351,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 				outfile.write((const char*)&buffs.front(), num_rx_samps*sizeof(std::complex<float>));
 				outfile << std::endl;
 			}*/
+			
+			num_acc_samps += num_rx_samps;
 		}
 		std::cout << boost::format("  -- Received %f samples") % num_acc_samps << std::endl;
 	}
