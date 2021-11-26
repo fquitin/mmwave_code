@@ -44,7 +44,7 @@ std::string* create_register_list(std::string degrees, std::string direction, in
 	return register_list; 
 }
  
- 
+
  
 // Write string on serial port and read response
 std::string write_read_serial(SerialPort* my_serial_port, std::string my_string)

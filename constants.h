@@ -150,4 +150,3 @@ std::string* angle_to_reg(std::string degrees, std::string direction)
 }
 
 
-// DEGREES = [DEG_0,DEG_11_25,DEG_22_25,DEG_33_75,DEG_45,DEG_56_25,DEG_67_5,DEG_78_75,DEG_90,DEG_101_2,DEG_112_5,DEG_123_7,DEG_135,DEG_146_2,DEG_157_5,DEG_168_7,DEG_180];
