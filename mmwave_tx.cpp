@@ -99,8 +99,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     double rate, freq_bb, gain_bb, freq_lo, gain_lo;
     
     
-    uint64_t 	nbr_samps_per_direction = 5000000;
-    int 		nbr_directions = 1;
+    uint64_t 	nbr_samps_per_direction = 1000000;
+    int 		nbr_directions = 9;
     
     // The following vector contains the phase shift between antennas (in degrees)
     std::string possible_degrees[17] = {"DEG_0","DEG_11_25","DEG_22_25","DEG_33_75","DEG_45","DEG_56_25","DEG_67_5","DEG_78_75","DEG_90","DEG_101_2","DEG_112_5","DEG_123_7","DEG_135","DEG_146_2","DEG_157_5","DEG_168_7","DEG_180"};	
@@ -270,22 +270,51 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 	std::string degrees;
 	std::string angle; 
 	std::string direction;
-	int mode = 0; // 0 for TX/RX off, 1 for TX, 1 for RX
-    for (int cpt_directions = 0; cpt_directions < nbr_directions; cpt_directions++)
-    {
-    	// Setting AiP beam direction
-    	degrees = possible_degrees[cpt_directions];
-    	angle = possible_angles[cpt_directions];
-    	direction = possible_directions[1];
-    	mode = 1;     	
-    	std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % usrp_tx->get_time_now().get_real_secs() << std::endl;
-    	send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
-    	
-    	// Blocking call to let USRP transmit until it's time for next direction
-    	time_next_direction += nbr_samps_per_direction/rate; 
-    	while(usrp_tx->get_time_now().get_real_secs()<time_next_direction){
-    		// wait
-    	}
+	int mode = 0; // 0 for TX/RX off, 1 for TX, 2 for RX
+	
+	
+	for (int cpt_leftright = 0; cpt_leftright < 2; cpt_leftright++)
+	{
+		if (cpt_leftright == 0)
+		{
+			direction = possible_directions[0];
+			for (int cpt_directions = 16; cpt_directions > -1; cpt_directions--)
+			{
+				// Setting AiP beam direction
+				degrees = possible_degrees[cpt_directions];
+				angle = possible_angles[cpt_directions];
+				
+				mode = 1;     	
+				std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % usrp_tx->get_time_now().get_real_secs() << std::endl;
+				send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
+				
+				// Blocking call to let USRP transmit until it's time for next direction
+				time_next_direction += nbr_samps_per_direction/rate; 
+				while(usrp_tx->get_time_now().get_real_secs()<time_next_direction){
+					// wait
+				}
+			}
+		}
+		else
+		{
+			direction = possible_directions[1];
+			for (int cpt_directions = 0; cpt_directions < 17; cpt_directions++)
+				{
+					// Setting AiP beam direction
+					degrees = possible_degrees[cpt_directions];
+					angle = possible_angles[cpt_directions];
+					
+					mode = 1;     	
+					std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % usrp_tx->get_time_now().get_real_secs() << std::endl;
+					send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
+					
+					// Blocking call to let USRP transmit until it's time for next direction
+					time_next_direction += nbr_samps_per_direction/rate; 
+					while(usrp_tx->get_time_now().get_real_secs()<time_next_direction){
+						// wait
+					}
+				}
+		}
 	}
 
     

@@ -150,7 +150,6 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     // Open serial port of the mmWave array
     // ======================================
     // Create and open the serial port for communication with the mmWave array.
-    /*
     std::cout << boost::format("Create and open the serial port for mmWave array on %s...") % name_serial_port << std::endl;
     SerialPort my_serial_port( name_serial_port );
     std::string my_string;  
@@ -160,7 +159,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     my_serial_port.SetCharacterSize( LibSerial::CharacterSize::CHAR_SIZE_8 );
     my_serial_port.SetStopBits( LibSerial::StopBits::STOP_BITS_1 ) ;
     my_serial_port.SetParity( LibSerial::Parity::PARITY_NONE );
-	*/
+	
     
     
     // create usrp RX device (with BB-RX and LO-TX)
@@ -280,14 +279,11 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     boost::thread_group transmit_thread;
     transmit_thread.create_thread(boost::bind(&lo_transmit_worker, data_lo, tx_stream));
     
-    
-    
+      
     // create a receive streamer
     uhd::rx_streamer::sptr rx_stream = usrp_rx_bb->get_rx_stream(stream_args);
     
 	
-    
-    
     //meta-data will be filled in by recv()
     uhd::rx_metadata_t md;
     
@@ -300,36 +296,44 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     //the first call to recv() will block this many seconds before receiving
     double timeout = seconds_in_future + 0.1; //timeout 
     
+    //setup streaming
+	total_num_samps = nbr_samps_per_direction ;
+	std::cout << boost::format("Begin streaming %u samples, %f seconds in the future...") % total_num_samps % seconds_in_future << std::endl;
+	uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
+	//stream_cmd.num_samps = total_num_samps;
+	stream_cmd.stream_now = false;
+	stream_cmd.time_spec = uhd::time_spec_t(seconds_in_future);
+	rx_stream->issue_stream_cmd(stream_cmd);
+	
 	
 	// ==============================================================
 	// Start looping over all AiP directions and Rx baseband samples
 	// ==============================================================
-	float time_next_direction = 1.0; 	// initial time of first transmission
 	std::string degrees;
 	std::string angle; 
 	std::string direction;
-	int mode = 0; // 0 for TX/RX off, 1 for TX, 1 for RX
+	int mode = 2; // 0 for TX/RX off, 1 for TX, 2 for RX
     for (int cpt_directions = 0; cpt_directions < nbr_directions; cpt_directions++)
     {
     	// Setting AiP beam direction
     	degrees = possible_degrees[cpt_directions];
     	angle = possible_angles[cpt_directions];
     	direction = possible_directions[1];
-    	mode = 1;     	
-    	std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % usrp_rx_bb->get_time_now().get_real_secs() << std::endl;
-    	//send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
+    	mode = 1;  
+    	float time_now = usrp_rx_bb->get_time_now().get_real_secs() ;    	
+    	std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % time_now << std::endl;
+    	send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
     	
-    	
-    	//setup streaming
-		total_num_samps = nbr_samps_per_direction ;
-		std::cout << boost::format("Begin streaming %u samples, %f seconds in the future...") % total_num_samps % seconds_in_future << std::endl;
-		uhd::stream_cmd_t stream_cmd(uhd::stream_cmd_t::STREAM_MODE_START_CONTINUOUS);
-		//stream_cmd.num_samps = total_num_samps;
-		stream_cmd.stream_now = false;
-		stream_cmd.time_spec = uhd::time_spec_t(seconds_in_future);
-		rx_stream->issue_stream_cmd(stream_cmd);
+    	if (outfile.is_open()) {
+			outfile << std::endl << "AiP data" << std::endl ;
+			outfile << boost::format("%s - %s degrees at time %f") % direction % angle % time_now;
+			outfile << std::endl;
+		}
     	
     	// Receive "nbr_samps_per_direction" samples
+    	if (outfile.is_open()) {
+			outfile << std::endl << "USRP data" << std::endl ;
+		}
     	size_t num_acc_samps = 0; //number of accumulated samples
 		while(num_acc_samps < nbr_samps_per_direction){
 		    //receive a single packet
@@ -346,26 +350,30 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 		        ) % md.strerror()));
 		    }
 		    
-		    /*if (outfile.is_open()) {
-				outfile << std::endl << "USRP data" << std::endl ;
+		    if (outfile.is_open()) {
 				outfile.write((const char*)&buffs.front(), num_rx_samps*sizeof(std::complex<float>));
-				outfile << std::endl;
-			}*/
+			}
 			
 			num_acc_samps += num_rx_samps;
 		}
 		std::cout << boost::format("  -- Received %f samples") % num_acc_samps << std::endl;
+		if (outfile.is_open()) {
+			outfile << std::endl;
+		}
 	}
 	
-
-    /*
+	// Stop streaming from USRP
+	stream_cmd.stream_mode = uhd::stream_cmd_t::STREAM_MODE_STOP_CONTINUOUS;
+	stream_cmd.stream_now = true;
+	rx_stream->issue_stream_cmd(stream_cmd);
+    
     // Disable AiP
     disable_aip(&my_serial_port);
     
     // Close serial port
     std::cout << std::endl << "Close serial port ..." << std::endl << std::endl;
     my_serial_port.Close();
-    */
+    
     
     // Stopping LO transmitter thread
     stop_signal_called = true;
