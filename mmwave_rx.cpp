@@ -92,7 +92,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     
     
     std::ofstream outfile;
-    uint64_t 	nbr_samps_per_direction = 5000000;
+    uint64_t 	nbr_samps_per_direction = 500000;
     int 		nbr_directions = 3;
     float 		seconds_in_future = 1;
     
@@ -313,13 +313,62 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 	std::string angle; 
 	std::string direction;
 	int mode = 2; // 0 for TX/RX off, 1 for TX, 2 for RX
-    for (int cpt_directions = 0; cpt_directions < nbr_directions; cpt_directions++)
+	direction = possible_directions[0];
+	for (int cpt_directions = 16; cpt_directions > -1; cpt_directions--)
+    //for (int cpt_directions = 0; cpt_directions < nbr_directions; cpt_directions++)
     {
     	// Setting AiP beam direction
     	degrees = possible_degrees[cpt_directions];
-    	angle = possible_angles[cpt_directions];
-    	direction = possible_directions[1];
-    	mode = 1;  
+    	angle = possible_angles[cpt_directions];	
+    	float time_now = usrp_rx_bb->get_time_now().get_real_secs() ;    	
+    	std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % time_now << std::endl;
+    	send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
+    	
+    	if (outfile.is_open()) {
+			outfile << std::endl << "AiP data" << std::endl ;
+			outfile << boost::format("%s - %s degrees at time %f") % direction % angle % time_now;
+			outfile << std::endl;
+		}
+    	
+    	// Receive "nbr_samps_per_direction" samples
+    	if (outfile.is_open()) {
+			outfile << std::endl << "USRP data" << std::endl ;
+		}
+    	size_t num_acc_samps = 0; //number of accumulated samples
+		while(num_acc_samps < nbr_samps_per_direction){
+		    //receive a single packet
+		    size_t num_rx_samps = rx_stream->recv(&buffs.front(), buffs.size(), md, timeout, true);
+
+		    //use a small timeout for subsequent packets
+		    timeout = 0.1;
+		    
+		    //handle the error code
+		    if (md.error_code == uhd::rx_metadata_t::ERROR_CODE_TIMEOUT) break;
+		    if (md.error_code != uhd::rx_metadata_t::ERROR_CODE_NONE){
+		        throw std::runtime_error(str(boost::format(
+		            "Receiver error %s"
+		        ) % md.strerror()));
+		    }
+		    
+		    if (outfile.is_open()) {
+				outfile.write((const char*)&buffs.front(), num_rx_samps*sizeof(std::complex<float>));
+			}
+			
+			num_acc_samps += num_rx_samps;
+		}
+		std::cout << boost::format("  -- Received %f samples") % num_acc_samps << std::endl;
+		if (outfile.is_open()) {
+			outfile << std::endl;
+		}
+	}
+	
+	direction = possible_directions[1];
+	for (int cpt_directions = 0; cpt_directions < 17; cpt_directions++)
+    //for (int cpt_directions = 0; cpt_directions < nbr_directions; cpt_directions++)
+    {
+    	// Setting AiP beam direction
+    	degrees = possible_degrees[cpt_directions];
+    	angle = possible_angles[cpt_directions];	
     	float time_now = usrp_rx_bb->get_time_now().get_real_secs() ;    	
     	std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % time_now << std::endl;
     	send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
