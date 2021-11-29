@@ -99,7 +99,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     double rate, freq_bb, gain_bb, freq_lo, gain_lo;
     
     
-    uint64_t 	nbr_samps_per_direction = 1000000;
+    uint64_t 	nbr_samps_per_direction = 500000;
     int 		nbr_directions = 9;
     
     // The following vector contains the phase shift between antennas (in degrees)
@@ -287,6 +287,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 				mode = 1;     	
 				std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % usrp_tx->get_time_now().get_real_secs() << std::endl;
 				send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
+				//std::cout << boost::format("  -- time now: %f") % usrp_tx->get_time_now().get_real_secs() << std::endl;
 				
 				// Blocking call to let USRP transmit until it's time for next direction
 				time_next_direction += nbr_samps_per_direction/rate; 

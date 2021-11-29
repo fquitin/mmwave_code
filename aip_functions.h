@@ -63,14 +63,18 @@ std::string write_read_serial(SerialPort* my_serial_port, std::string my_string)
     while (!(timeout)){
     	try
     	{
-	    my_serial_port->ReadByte( next_char, timeout_ms );
-	    //std::cout << boost::format("  -- from serial port: %s") % next_char << std::endl;
-	    rx_string.push_back( next_char );
+			my_serial_port->ReadByte( next_char, timeout_ms );
+			//std::cout << boost::format("  -- from serial port: %s") % next_char << std::endl;
+			rx_string.push_back( next_char );
+			if (next_char == '\r'){
+				my_serial_port->ReadByte( next_char, timeout_ms );
+				//std::cout << boost::format("    -- found CARRIAGE RETURN to end message" ) << std::endl;
+				timeout = 1;
+			}		
     	}
     	catch (const ReadTimeout&)
     	{	
-	    
-	    timeout = 1;
+	    	timeout = 1;
     	}	
     }
     //std::cout << boost::format("    -- response from serial port: %s" ) % rx_string << std::endl;
