@@ -11,6 +11,8 @@
 set(mmwave_code_sources
     mmwave_tx.cpp
     mmwave_rx.cpp
+    mmwave_array_test.cpp
+    mmwave_joint_txrx.cpp
 )
 
 

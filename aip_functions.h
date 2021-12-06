@@ -58,7 +58,7 @@ std::string write_read_serial(SerialPort* my_serial_port, std::string my_string,
     // Write to serial port
     my_serial_port->Write( my_string );
     if(ver_aip){
-    	std::cout << boost::format("  -- to serial port: %s") % my_string << std::endl;
+    	std::cout << boost::format("    -- to serial port: %s") % my_string << std::endl;
 	}
 
     // Read from serial port until timeout
