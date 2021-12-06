@@ -95,6 +95,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     uint64_t 	nbr_samps_per_direction = 500000;
     int 		nbr_directions = 3;
     float 		seconds_in_future = 1;
+    int 		ver_aip = 0;
     
     // The following vector contains the phase shift between antennas (in degrees)
     std::string possible_degrees[17] = {"DEG_0","DEG_11_25","DEG_22_25","DEG_33_75","DEG_45","DEG_56_25","DEG_67_5","DEG_78_75","DEG_90","DEG_101_2","DEG_112_5","DEG_123_7","DEG_135","DEG_146_2","DEG_157_5","DEG_168_7","DEG_180"};	
@@ -322,7 +323,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     	angle = possible_angles[cpt_directions];	
     	float time_now = usrp_rx_bb->get_time_now().get_real_secs() ;    	
     	std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % time_now << std::endl;
-    	send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
+    	send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode, ver_aip);
     	
     	if (outfile.is_open()) {
 			outfile << std::endl << "AiP data" << std::endl ;
@@ -371,7 +372,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     	angle = possible_angles[cpt_directions];	
     	float time_now = usrp_rx_bb->get_time_now().get_real_secs() ;    	
     	std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % time_now << std::endl;
-    	send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
+    	send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode, ver_aip);
     	
     	if (outfile.is_open()) {
 			outfile << std::endl << "AiP data" << std::endl ;
@@ -417,7 +418,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 	rx_stream->issue_stream_cmd(stream_cmd);
     
     // Disable AiP
-    disable_aip(&my_serial_port);
+    disable_aip(&my_serial_port, ver_aip);
     
     // Close serial port
     std::cout << std::endl << "Close serial port ..." << std::endl << std::endl;

@@ -38,8 +38,9 @@ std::string* create_register_list(std::string degrees, std::string direction, in
 		register_list[i].append(active_list_hex[i]);
 		register_list[i].append(std::to_string(gain));
 		register_list[i].append(gain_list_hex[i]);
-		register_list[i].append(angle_list_hex[i]);
-	}     
+		// !!! THERE SEEMS TO BE A BUG IN THE EXAMPLES WE RECEIVED FROM AMOTECH. THEY SEEM TO HAVE INVERSED THE ORDER OF THE REGISTERS. HOWEVER, THIS DOES NOT SEEM TO MATTER IN THE END. 
+		register_list[i].append(angle_list_hex[3-i]); 
+	}    
 	//std::cout << boost::format(" REGISTER LIST: {%s, %s, %s, %s}") % register_list[0] % register_list[1] % register_list[2] % register_list[3] << std::endl;
 	return register_list; 
 }
@@ -47,7 +48,7 @@ std::string* create_register_list(std::string degrees, std::string direction, in
 
  
 // Write string on serial port and read response
-std::string write_read_serial(SerialPort* my_serial_port, std::string my_string)
+std::string write_read_serial(SerialPort* my_serial_port, std::string my_string, int ver_aip)
 {
     int timeout_ms = 20; // timeout value in milliseconds
     char next_char;      // variable to store the read result
@@ -56,7 +57,9 @@ std::string write_read_serial(SerialPort* my_serial_port, std::string my_string)
 
     // Write to serial port
     my_serial_port->Write( my_string );
-    //std::cout << boost::format("  -- to serial port: %s") % my_string << std::endl;
+    if(ver_aip){
+    	std::cout << boost::format("  -- to serial port: %s") % my_string << std::endl;
+	}
 
     // Read from serial port until timeout
     rx_string = "";
@@ -77,7 +80,9 @@ std::string write_read_serial(SerialPort* my_serial_port, std::string my_string)
 	    	timeout = 1;
     	}	
     }
-    //std::cout << boost::format("    -- response from serial port: %s" ) % rx_string << std::endl;
+    if(ver_aip){
+    	std::cout << boost::format("    -- response from serial port: %s" ) % rx_string << std::endl;
+	}
     return rx_string;
 }
 
@@ -88,16 +93,16 @@ std::string write_read_serial(SerialPort* my_serial_port, std::string my_string)
  **********************************************************************/
  
 // Send command to mmWave AiP
-void send_to_aip(SerialPort* my_serial_port, std::string degrees, std::string direction, int* gain_list, int gain, std::string* active_list, int mode)
+void send_to_aip(SerialPort* my_serial_port, std::string degrees, std::string direction, int* gain_list, int gain, std::string* active_list, int mode, int ver_aip)
 {
     std::string my_string; 
     std::string* register_list = create_register_list(degrees, direction, gain_list, gain, active_list, mode);
       
     // Initialize the mmWave array package
     //std::cout << boost::format("Initialize mmWave array...") << std::endl;
-    write_read_serial(my_serial_port, "AT+DUT=0158\r\0");
-    write_read_serial(my_serial_port, "AT+AIPCONFIG=0202\r\0");
-    write_read_serial(my_serial_port, "AT+ADRNUM=001\r\0");
+    write_read_serial(my_serial_port, "AT+DUT=0158\r\0", ver_aip);
+    write_read_serial(my_serial_port, "AT+AIPCONFIG=0202\r\0", ver_aip);
+    write_read_serial(my_serial_port, "AT+ADRNUM=001\r\0", ver_aip);
     // TODO: check if all responses = AMO_OK
     
     // Initialize chip registers
@@ -105,55 +110,55 @@ void send_to_aip(SerialPort* my_serial_port, std::string degrees, std::string di
     my_string.append(REG1);
     my_string.append("\r\0");
     for (int i=0; i<4; i++){
-    	write_read_serial(my_serial_port, my_string);
+    	write_read_serial(my_serial_port, my_string, ver_aip);
     }
     // TODO: check if all responses = CHIP_OK
-    write_read_serial(my_serial_port, "AT+SEND?\r\0");
+    write_read_serial(my_serial_port, "AT+SEND?\r\0", ver_aip);
     
     // Write insctructions for each chip
     for (int i=0; i<4; i++){
         my_string = "AT+REG=";
         my_string.append(register_list[i]);
         my_string.append("\r\0");
-        write_read_serial(my_serial_port, my_string);
+        write_read_serial(my_serial_port, my_string, ver_aip);
     }
     // TODO: check if all responses = CHIP_OK
-    write_read_serial(my_serial_port, "AT+SEND?\r\0");
+    write_read_serial(my_serial_port, "AT+SEND?\r\0", ver_aip);
     
     // Read temperature of each chip
     my_string = "AT+REG=";
     my_string.append(REG_TEMP);
     my_string.append("\r\0");
     for (int i=0; i<4; i++){
-        write_read_serial(my_serial_port, my_string);
+        write_read_serial(my_serial_port, my_string, ver_aip);
     }
     // TODO: check if all responses = CHIP_OK
-    write_read_serial(my_serial_port, "AT+SEND?\r\0");
+    write_read_serial(my_serial_port, "AT+SEND?\r\0", ver_aip);
     
     // Enable Tx or Rx
     if (mode == 1){
 		//std::cout << boost::format("Enabling Tx..") << std::endl;
-		write_read_serial(my_serial_port, "AT+TXEN=1\r\0");
+		write_read_serial(my_serial_port, "AT+TXEN=1\r\0", ver_aip);
     }
     else if (mode == 2){
         //std::cout << boost::format("Enabling Rx..") << std::endl;
-		write_read_serial(my_serial_port, "AT+RXEN=1\r\0");
+		write_read_serial(my_serial_port, "AT+RXEN=1\r\0", ver_aip);
     }   
     else if (mode == 0){
     	//std::cout << boost::format("Disabling Tx and Rx of AiP..") << std::endl;
-		write_read_serial(my_serial_port, "AT+TXEN=0\r\0");
-		write_read_serial(my_serial_port, "AT+RXEN=0\r\0");
+		write_read_serial(my_serial_port, "AT+TXEN=0\r\0", ver_aip);
+		write_read_serial(my_serial_port, "AT+RXEN=0\r\0", ver_aip);
 	}
     // TODO: check if all responses = AMO_OK
       
 }
  
 // Disable Tx/Rx of mmWave AiP
-void disable_aip(SerialPort* my_serial_port)
+void disable_aip(SerialPort* my_serial_port, int ver_aip)
 {
     std::cout << boost::format("Disabling Tx and Rx of AiP..") << std::endl;
-    write_read_serial(my_serial_port, "AT+TXEN=0\r\0");
-    write_read_serial(my_serial_port, "AT+RXEN=0\r\0");
+    write_read_serial(my_serial_port, "AT+TXEN=0\r\0", ver_aip);
+    write_read_serial(my_serial_port, "AT+RXEN=0\r\0", ver_aip);
     // TODO: check if all responses = AMO_OK
 }
 

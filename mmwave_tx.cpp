@@ -101,6 +101,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     
     uint64_t 	nbr_samps_per_direction = 500000;
     int 		nbr_directions = 9;
+    int 		ver_aip = 0;
     
     // The following vector contains the phase shift between antennas (in degrees)
     std::string possible_degrees[17] = {"DEG_0","DEG_11_25","DEG_22_25","DEG_33_75","DEG_45","DEG_56_25","DEG_67_5","DEG_78_75","DEG_90","DEG_101_2","DEG_112_5","DEG_123_7","DEG_135","DEG_146_2","DEG_157_5","DEG_168_7","DEG_180"};	
@@ -117,7 +118,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     // clang-format off
     desc.add_options()
 		("help", "help message")
-		("args", po::value<std::string>(&args)->default_value("addr=192.168.192.40"), "single uhd device address args")
+		("args", po::value<std::string>(&args)->default_value("addr=192.168.192.30"), "single uhd device address args")
 		("file", po::value<std::string>(&file)->default_value(""), "name of the file to read binary samples from (if empty, LO signal is sent)")
 		("nsamps", po::value<uint64_t>(&total_num_samps)->default_value(0), "total number of samples to transmit (0 for infinite)")
 		("rate", po::value<double>(&rate)->default_value(1000000), "rate of outgoing samples")
@@ -159,6 +160,14 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     my_serial_port.SetCharacterSize( LibSerial::CharacterSize::CHAR_SIZE_8 );
     my_serial_port.SetStopBits( LibSerial::StopBits::STOP_BITS_1 ) ;
     my_serial_port.SetParity( LibSerial::Parity::PARITY_NONE );
+    
+    int mode_init = 1;
+	std::cout << boost::format("Setting AiP to %s - %s °") % "UP" % "0"  << std::endl;
+    send_to_aip(&my_serial_port, "DEG_0", "UP", gain_list, gain, active_list, mode_init, ver_aip);
+    std::cout << boost::format("Setting AiP to %s - %s °") % "UP" % "0"  << std::endl;
+    send_to_aip(&my_serial_port, "DEG_0", "UP", gain_list, gain, active_list, mode_init, ver_aip);
+    std::cout << boost::format("Setting AiP to %s - %s °") % "LEFT" % "0"  << std::endl;
+    send_to_aip(&my_serial_port, "DEG_0", "LEFT", gain_list, gain, active_list, mode_init, ver_aip);
 
     
     
@@ -273,11 +282,13 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 	int mode = 0; // 0 for TX/RX off, 1 for TX, 2 for RX
 	
 	
+	//for (int cpt_leftright = 0; cpt_leftright < 1; cpt_leftright++)
 	for (int cpt_leftright = 0; cpt_leftright < 2; cpt_leftright++)
 	{
 		if (cpt_leftright == 0)
 		{
 			direction = possible_directions[0];
+			//for (int cpt_directions = 2; cpt_directions > -1; cpt_directions--)
 			for (int cpt_directions = 16; cpt_directions > -1; cpt_directions--)
 			{
 				// Setting AiP beam direction
@@ -286,7 +297,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 				
 				mode = 1;     	
 				std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % usrp_tx->get_time_now().get_real_secs() << std::endl;
-				send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
+				send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode, ver_aip);
 				//std::cout << boost::format("  -- time now: %f") % usrp_tx->get_time_now().get_real_secs() << std::endl;
 				
 				// Blocking call to let USRP transmit until it's time for next direction
@@ -307,7 +318,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 					
 					mode = 1;     	
 					std::cout << boost::format("Setting AiP to %s - %s ° at time %f") % direction % angle % usrp_tx->get_time_now().get_real_secs() << std::endl;
-					send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode);
+					send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode, ver_aip);
 					
 					// Blocking call to let USRP transmit until it's time for next direction
 					time_next_direction += nbr_samps_per_direction/rate; 
@@ -320,7 +331,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 
     
     // Disable AiP
-    disable_aip(&my_serial_port);
+    disable_aip(&my_serial_port, ver_aip);
     
     // Close serial port
     std::cout << std::endl << "Close serial port ..." << std::endl << std::endl;
