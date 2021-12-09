@@ -165,7 +165,9 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 											  "DEG_101_2","DEG_112_5","DEG_123_7","DEG_135","DEG_146_2","DEG_157_5","DEG_168_7","DEG_180"};	
     std::string 	all_angles[17] 		= {"0.00", "4.00", "8.00", "11.50", "15.50", "19.50", "23.50", "28.00", "32.50",
     										 "37.00", "41.50", "46.50", "52.00", "57.50", "64.50", "72.00", "78.00"};			
-	float 			seconds_in_future 	= 1;
+	float 			seconds_in_future 	= 2.0;
+	int 			nbr_degrees 		= 17; // nbr of beams in one direction from broadside, between 1 and 17
+	int 			nbr_directions 		= 2;  // nbr of directions, between 1 and 4 (2 to sweep from left to right)
     
     
     // setup the program options
@@ -480,13 +482,16 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 	mode_tx = 1;
 	mode_rx = 2;
 	
+	init_aip(&my_serial_port_tx, ver_aip);
+	init_aip(&my_serial_port_rx, ver_aip);
+	
 	// Loop over all Tx angles
-    for (int cpt_direction_tx = 0; cpt_direction_tx < 2; cpt_direction_tx++){
-    	for (int cpt_degrees_tx = 0; cpt_degrees_tx < 17; cpt_degrees_tx++){
+    for (int cpt_direction_tx = 0; cpt_direction_tx < nbr_directions; cpt_direction_tx++){
+    	for (int cpt_degrees_tx = 0; cpt_degrees_tx < nbr_degrees; cpt_degrees_tx++){
     		direction_tx = all_directions[cpt_direction_tx];
 			if (cpt_direction_tx == 0){
-				degrees_tx 	= all_degrees[17-1-cpt_degrees_tx];
-				angle_tx 	= all_angles[17-1-cpt_degrees_tx];
+				degrees_tx 	= all_degrees[nbr_degrees-1-cpt_degrees_tx];
+				angle_tx 	= all_angles[nbr_degrees-1-cpt_degrees_tx];
 			}
 			else if (cpt_direction_tx == 1){
 				degrees_tx 	= all_degrees[cpt_degrees_tx];
@@ -494,15 +499,15 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 			}
 			// Setting Tx AiP
 			std::cout << boost::format("Setting Tx AiP to %s - %s ° at time %f") % direction_tx % angle_tx % usrp_tx->get_time_now().get_real_secs() << std::endl;
-			send_to_aip(&my_serial_port_tx, degrees_tx, direction_tx, gain_list_tx, gain_tx, active_list_tx, mode_tx, ver_aip);
+			send_to_aip_fast(&my_serial_port_tx, degrees_tx, direction_tx, gain_list_tx, gain_tx, active_list_tx, mode_tx, ver_aip);
     		
     		// Loop over all Rx angles
-    		for (int cpt_direction_rx = 0; cpt_direction_rx < 2; cpt_direction_rx++){
-    			for (int cpt_degrees_rx = 0; cpt_degrees_rx < 17; cpt_degrees_rx++){
+    		for (int cpt_direction_rx = 0; cpt_direction_rx < nbr_directions; cpt_direction_rx++){
+    			for (int cpt_degrees_rx = 0; cpt_degrees_rx < nbr_degrees; cpt_degrees_rx++){
     				direction_rx = all_directions[cpt_direction_rx];
     				if (cpt_direction_rx == 0){
-    					degrees_rx 	= all_degrees[17-1-cpt_degrees_rx];
-    					angle_rx 	= all_angles[17-1-cpt_degrees_rx];
+    					degrees_rx 	= all_degrees[nbr_degrees-1-cpt_degrees_rx];
+    					angle_rx 	= all_angles[nbr_degrees-1-cpt_degrees_rx];
     				}
     				else if (cpt_direction_rx == 1){
     					degrees_rx 	= all_degrees[cpt_degrees_rx];
@@ -511,7 +516,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     				// Setting Rx AiP
     				float time_now = usrp_rx_bb->get_time_now().get_real_secs() ;    	
 					std::cout << boost::format("Setting Rx AiP to %s - %s ° at time %f") % direction_rx % angle_rx % time_now << std::endl;
-					send_to_aip(&my_serial_port_rx, degrees_rx, direction_rx, gain_list_rx, gain_rx, active_list_rx, mode_rx, ver_aip);
+					send_to_aip_fast(&my_serial_port_rx, degrees_rx, direction_rx, gain_list_rx, gain_rx, active_list_rx, mode_rx, ver_aip);
     				
     				// Write Rx and Tx AiP data to file
     				if (outfile.is_open()) {
@@ -549,10 +554,11 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 						num_acc_samps += num_rx_samps;
 					}
 					std::cout << boost::format("  -- Received %f samples") % num_acc_samps << std::endl;
+					
 					if (outfile.is_open()) {
 						outfile << std::endl;
 					}
-    				
+					
     			}
 			}    	
 			

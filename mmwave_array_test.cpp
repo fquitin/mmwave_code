@@ -40,10 +40,11 @@ bool stop_signal_called = false;
 int UHD_SAFE_MAIN(int argc, char* argv[])
 {
     // variables to be set by po
-    std::string name_serial_port;
+    std::string 	name_serial_port;
+    int 			ver_aip;
 
     int 		nbr_directions = 3;
-    int 		ver_aip = 0;
+    
  
     
     // The following vector contains the phase shift between antennas (in degrees)
@@ -62,6 +63,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     desc.add_options()
 		("help", "help message")
 		("serialport", po::value<std::string>(&name_serial_port)->default_value("/dev/ttyUSB0"), "Serial port of the mmWave array")
+		("ver-aip", po::value<int>(&ver_aip)->default_value(0), "verbose mmWave arrays on or off")
         
     ;
     // clang-format on
@@ -107,6 +109,8 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 	// ==============================================================
 	
 	
+	init_aip(&my_serial_port, ver_aip);
+	
 	std::string degrees;
 	std::string angle; 
 	std::string direction;
@@ -119,7 +123,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     	degrees = possible_degrees[cpt_directions];
     	angle = possible_angles[cpt_directions];	
     	std::cout << boost::format("Setting AiP to %s - %s °") % direction % angle  << std::endl;
-    	send_to_aip(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode, ver_aip);
+    	send_to_aip_fast(&my_serial_port, degrees, direction, gain_list, gain, active_list, mode, ver_aip);
     	
 		usleep(100000);
 	}
