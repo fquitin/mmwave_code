@@ -152,6 +152,67 @@ void send_to_aip(SerialPort* my_serial_port, std::string degrees, std::string di
     // TODO: check if all responses = AMO_OK
       
 }
+
+
+// Send command to mmWave AiP
+void init_aip(SerialPort* my_serial_port, int ver_aip)
+{
+	std::string my_string; 
+	
+    // Initialize the mmWave array package
+    //std::cout << boost::format("Initialize mmWave array...") << std::endl;
+    write_read_serial(my_serial_port, "AT+DUT=0158\r\0", ver_aip);
+    write_read_serial(my_serial_port, "AT+AIPCONFIG=0202\r\0", ver_aip);
+    write_read_serial(my_serial_port, "AT+ADRNUM=001\r\0", ver_aip);
+    // TODO: check if all responses = AMO_OK
+    
+    // Initialize chip registers
+    my_string = "AT+REG=";
+    my_string.append(REG1);
+    my_string.append("\r\0");
+    for (int i=0; i<4; i++){
+    	write_read_serial(my_serial_port, my_string, ver_aip);
+    }
+    // TODO: check if all responses = CHIP_OK
+    write_read_serial(my_serial_port, "AT+SEND?\r\0", ver_aip);
+}
+
+
+
+// Send command to mmWave AiP
+void send_to_aip_fast(SerialPort* my_serial_port, std::string degrees, std::string direction, int* gain_list, int gain, std::string* active_list, int mode, int ver_aip)
+{
+    std::string my_string; 
+    std::string* register_list = create_register_list(degrees, direction, gain_list, gain, active_list, mode);
+      
+    // Write insctructions for each chip
+    for (int i=0; i<4; i++){
+        my_string = "AT+REG=";
+        my_string.append(register_list[i]);
+        my_string.append("\r\0");
+        write_read_serial(my_serial_port, my_string, ver_aip);
+    }
+    // TODO: check if all responses = CHIP_OK
+    write_read_serial(my_serial_port, "AT+SEND?\r\0", ver_aip);
+    
+    // Enable Tx or Rx
+    if (mode == 1){
+		//std::cout << boost::format("Enabling Tx..") << std::endl;
+		write_read_serial(my_serial_port, "AT+TXEN=1\r\0", ver_aip);
+    }
+    else if (mode == 2){
+        //std::cout << boost::format("Enabling Rx..") << std::endl;
+		write_read_serial(my_serial_port, "AT+RXEN=1\r\0", ver_aip);
+    }   
+    else if (mode == 0){
+    	//std::cout << boost::format("Disabling Tx and Rx of AiP..") << std::endl;
+		write_read_serial(my_serial_port, "AT+TXEN=0\r\0", ver_aip);
+		write_read_serial(my_serial_port, "AT+RXEN=0\r\0", ver_aip);
+	}
+    // TODO: check if all responses = AMO_OK
+      
+}
+
  
 // Disable Tx/Rx of mmWave AiP
 void disable_aip(SerialPort* my_serial_port, int ver_aip)
