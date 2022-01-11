@@ -118,7 +118,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     // clang-format off
     desc.add_options()
 		("help", "help message")
-		("args", po::value<std::string>(&args)->default_value("addr=192.168.192.30"), "single uhd device address args")
+		("args", po::value<std::string>(&args)->default_value("addr=192.168.192.50"), "single uhd device address args")
 		("file", po::value<std::string>(&file)->default_value(""), "name of the file to read binary samples from (if empty, LO signal is sent)")
 		("nsamps", po::value<uint64_t>(&total_num_samps)->default_value(0), "total number of samples to transmit (0 for infinite)")
 		("rate", po::value<double>(&rate)->default_value(1000000), "rate of outgoing samples")

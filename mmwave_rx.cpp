@@ -125,7 +125,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
 		("subdev-lo", po::value<std::string>(&subdev_lo)->default_value("B:0"), "LO subdevice specification")
 		("ref", po::value<std::string>(&ref)->default_value("external"), "clock reference (internal, external, gpsdo)")
 		("pps", po::value<std::string>(&pps)->default_value("external"), "PPS source (internal, external, gpsdo)")
-		("serialport", po::value<std::string>(&name_serial_port)->default_value("/dev/ttyUSB0"), "Serial port of the mmWave array")
+		("serialport", po::value<std::string>(&name_serial_port)->default_value("/dev/ttyUSB1"), "Serial port of the mmWave array")
         
     ;
     // clang-format on

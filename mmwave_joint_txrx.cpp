@@ -175,7 +175,7 @@ int UHD_SAFE_MAIN(int argc, char* argv[])
     // clang-format off
     desc.add_options()
 		("help", "help message")
-		("args-tx", po::value<std::string>(&args_tx)->default_value("addr=192.168.192.30"), "USRP IP address for Tx") 
+		("args-tx", po::value<std::string>(&args_tx)->default_value("addr=192.168.192.50"), "USRP IP address for Tx") 
 		("args-rx", po::value<std::string>(&args_rx)->default_value("addr=192.168.192.40"), "USRP IP address for Rx") 
 		("serialport-tx", po::value<std::string>(&name_serial_port_tx)->default_value("/dev/ttyUSB0"), "Serial port of the Tx mmWave array")
 		("serialport-rx", po::value<std::string>(&name_serial_port_rx)->default_value("/dev/ttyUSB1"), "Serial port of the Rx mmWave array")
