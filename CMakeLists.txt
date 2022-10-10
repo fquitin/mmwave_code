@@ -14,6 +14,7 @@ set(mmwave_code_sources
     mmwave_array_test.cpp
     mmwave_joint_txrx.cpp
     generate_tx_signal.cpp
+    mmwave_array_turnRxOn.cpp
 )
 
 
